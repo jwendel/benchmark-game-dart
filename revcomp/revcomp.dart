@@ -1,10 +1,10 @@
 import 'dart:io';
+import 'dart:typeddata';
 
 void main() {
-  var src   = "CGATMKRYVBHD";
-  var dst   = "GCTAKMYRBVDH";
-  var tbl   = new List<int>(256);
-  var seq   = new List<int>();
+  String src   = "CGATMKRYVBHD";
+  String dst   = "GCTAKMYRBVDH";
+  Uint8List tbl   = new Uint8List(256);
 
   // Set up lookup table
   for (int i = 0; i < tbl.length; i++)
@@ -15,10 +15,40 @@ void main() {
     tbl[src.toLowerCase().codeUnitAt(i)]  = dst.codeUnitAt(i);
   }
 
-  var buffer = new List<int>(60);
+  const int BUFFER_SIZE = 1024*1024;
+  Uint8List buffer = new Uint8List(60);
   List<int> list = new List<int>();
   bool commentLine = false;
-  StringBuffer sbuf = new StringBuffer();
+  Uint8List sbuf = new Uint8List(BUFFER_SIZE);
+  int pos = 0;
+
+
+
+  void copyAndPrint(List<int> src, int size) {
+    int start = 0;
+    if (size + pos > BUFFER_SIZE) {
+      while (pos < BUFFER_SIZE) {
+        sbuf[pos++] = src[start++];
+      }
+      stdout.writeBytes(sbuf);
+      sbuf = new Uint8List(BUFFER_SIZE);
+      pos = 0;
+    }
+
+    for (int i=start; i < size;i++) {
+      sbuf[pos++] = src[i];
+    }
+  }
+
+  void addNewline() {
+    if (pos == BUFFER_SIZE) {
+      stdout.writeBytes(sbuf);
+      sbuf = new Uint8List(BUFFER_SIZE);
+      pos = 0;
+    }
+
+    sbuf[pos++] = 10;
+  }
 
   stdin.listen((List<int> dataList) {
     // Loop over all the contents of the buffer so far
@@ -31,16 +61,17 @@ void main() {
         // Print the reverse components for the last block
         for (int g in list.reversed) {
           if (count == 60) {
-            sbuf.write(new String.fromCharCodes(buffer.getRange(0, count)));
-            sbuf.write('\n');
+
+            copyAndPrint(buffer, count);
+            addNewline();
             count=0;
           }
           buffer[count++] = g;
         }
         // Print any stragling data
         if (count > 0) {
-          sbuf.write(new String.fromCharCodes(buffer.getRange(0, count)));
-          sbuf.write('\n');
+          copyAndPrint(buffer, count);
+          addNewline();
         }
         // Reset the data for the begining of a block of data
         list.clear();
@@ -49,9 +80,8 @@ void main() {
 
       if (commentLine) {
         if (data == 10) {
-          sbuf.write(new String.fromCharCodes(list));
-          print(sbuf);
-          sbuf = new StringBuffer();
+          copyAndPrint(list, list.length);
+          addNewline();
           commentLine = false;
           list.clear();
         } else {
@@ -65,21 +95,24 @@ void main() {
   }).onDone(() {
     // Print out anything remaining in the buffers
     if (commentLine) {
-      sbuf.write(new String.fromCharCodes(list));
+      copyAndPrint(list, list.length);
+      addNewline();
     } else {
       int count = 0;
       for (int data in list.reversed) {
         if (count == 60) {
-          sbuf.write(new String.fromCharCodes(buffer.getRange(0, count)));
-          sbuf.write('\n');
+          copyAndPrint(buffer, count);
+          addNewline();
           count=0;
         }
         buffer[count++] = data;
       }
       if (count > 0) {
-        sbuf.write(new String.fromCharCodes(buffer.getRange(0, count)));
+        copyAndPrint(buffer, count);
+        addNewline();
       }
     }
-    print(sbuf);
+    if (pos > 0)
+      stdout.writeBytes(sbuf.sublist(0, pos));
   });
 }
