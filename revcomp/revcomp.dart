@@ -18,6 +18,7 @@ void main() {
   var buffer = new List<int>(60);
   List<int> list = new List<int>();
   bool commentLine = false;
+  StringBuffer sbuf = new StringBuffer();
 
   stdin.listen((List<int> dataList) {
     // Loop over all the contents of the buffer so far
@@ -30,16 +31,17 @@ void main() {
         // Print the reverse components for the last block
         for (int g in list.reversed) {
           if (count == 60) {
-            print(new String.fromCharCodes(buffer.getRange(0, count)));
+            sbuf.write(new String.fromCharCodes(buffer.getRange(0, count)));
+            sbuf.write('\n');
             count=0;
           }
           buffer[count++] = g;
         }
         // Print any stragling data
         if (count > 0) {
-          print(new String.fromCharCodes(buffer.getRange(0, count)));
+          sbuf.write(new String.fromCharCodes(buffer.getRange(0, count)));
+          sbuf.write('\n');
         }
-
         // Reset the data for the begining of a block of data
         list.clear();
         commentLine = true;
@@ -47,7 +49,9 @@ void main() {
 
       if (commentLine) {
         if (data == 10) {
-          print(new String.fromCharCodes(list));
+          sbuf.write(new String.fromCharCodes(list));
+          print(sbuf);
+          sbuf = new StringBuffer();
           commentLine = false;
           list.clear();
         } else {
@@ -61,19 +65,21 @@ void main() {
   }).onDone(() {
     // Print out anything remaining in the buffers
     if (commentLine) {
-        print(new String.fromCharCodes(list));
-      } else {
-        int count = 0;
-        for (int data in list.reversed) {
-          if (count == 60) {
-            print(new String.fromCharCodes(buffer.getRange(0, count)));
-            count=0;
-          }
-          buffer[count++] = data;
+      sbuf.write(new String.fromCharCodes(list));
+    } else {
+      int count = 0;
+      for (int data in list.reversed) {
+        if (count == 60) {
+          sbuf.write(new String.fromCharCodes(buffer.getRange(0, count)));
+          sbuf.write('\n');
+          count=0;
         }
-        if (count > 0) {
-          print(new String.fromCharCodes(buffer.getRange(0, count)));
-        }
+        buffer[count++] = data;
       }
+      if (count > 0) {
+        sbuf.write(new String.fromCharCodes(buffer.getRange(0, count)));
+      }
+    }
+    print(sbuf);
   });
 }

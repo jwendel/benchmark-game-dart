@@ -8,4 +8,6 @@ pubspec.lock
 *.js
 *.map
 */out/
+input*.txt
+out*.txt
 
