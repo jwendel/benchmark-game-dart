@@ -21,14 +21,14 @@ final Frequency IUB = new Frequency(
       0.02, 0.02, 0.02,]);
 
 final Frequency HOMO_SAPIENS = new Frequency(
-     [ 'a',
-       'c',
-       'g',
-       't'],
-     [ 0.3029549426680,
-       0.1979883004921,
-       0.1975473066391,
-       0.3015094502008]);
+    [ 'a',
+      'c',
+      'g',
+      't'],
+      [ 0.3029549426680,
+        0.1979883004921,
+        0.1975473066391,
+        0.3015094502008]);
 
 const int IM = 139968;
 const int IA = 3877;
@@ -39,17 +39,18 @@ const int BUFFER_SIZE = (LINE_LENGTH + 1)*1024;
 
 const double oneOverIM = (1.0/ IM);
 
-int last = 42;
-
-double random(double max) {
-  last = (last * IA + IC) % IM;
-  return max * last * oneOverIM;
-}
-
+const bool DEBUG = false;
+Stopwatch w;
 
 class Frequency {
   Uint16List chars;
   List<double> probs;
+  int last;
+  
+  double random(double max) {
+    last = (last * IA + IC) % IM;
+    return max * last * oneOverIM;
+  }
 
   Frequency(List<String> charList, List<double> probList) {
     chars = new Uint16List(charList.length);
@@ -94,7 +95,7 @@ class Frequency {
 }
 
 makeRepeatFasta(String id, String desc, String alu, int _nChars, IOSink writer) {
-//  stderr.write("Repeat Start  ${w.elapsedMilliseconds} ms\n");
+  if (DEBUG) stderr.write("Repeat Start  ${w.elapsedMilliseconds} ms\n");
   writer.write(">${id} ${desc}\n");
 
   int aluIndex = 0;
@@ -135,13 +136,13 @@ makeRepeatFasta(String id, String desc, String alu, int _nChars, IOSink writer) 
   }
 
   writer.writeBytes(new Uint16List.view(buffer.buffer, 0, bufferIndex));
-//  stderr.write("Repeat END  ${w.elapsedMilliseconds} ms\n");
+  if (DEBUG) stderr.write("Repeat END  ${w.elapsedMilliseconds} ms\n");
 }
 
 
 
 void makeRandomFasta(String id, String desc, Frequency fpf, int nChars, IOSink writer) {
-//  stderr.write("Random START  ${w.elapsedMilliseconds} ms\n");
+  if (DEBUG) stderr.write("Random START  ${w.elapsedMilliseconds} ms\n");
   writer.write(">${id} ${desc}\n");
 
   Uint16List buffer = new Uint16List(BUFFER_SIZE);
@@ -164,26 +165,35 @@ void makeRandomFasta(String id, String desc, Frequency fpf, int nChars, IOSink w
 
 
   writer.writeBytes(new Uint16List.view(buffer.buffer, 0, bufferIndex));
-//  stderr.write("Random END  ${w.elapsedMilliseconds} ms\n");
+  if (DEBUG) stderr.write("Random END  ${w.elapsedMilliseconds} ms\n");
 }
 
 
-//var w = new Stopwatch()..start();
 main() {
-//  stderr.write("main start  ${w.elapsedMilliseconds} ms\n");
+  if (DEBUG) {
+    w = new Stopwatch()..start();
+    stderr.write("main start  ${w.elapsedMilliseconds} ms\n");
+  }
 
-  IOSink writer = stdout;
+//  IOSink writer = stdout;
+  IOSink writer = new File(r'a.txt').openWrite();
 
-  int n = 250;
+  int n = 2500000;
   List<String> args = new Options().arguments;
   if (args != null && args.length > 0) {
     n = int.parse(args[0]);
   }
 
   makeRepeatFasta("ONE", "Homo sapiens alu", ALU, n * 2, writer);
+  IUB.last = 42;
   makeRandomFasta("TWO", "IUB ambiguity codes", IUB, n * 3, writer);
+  HOMO_SAPIENS.last = IUB.last;
   makeRandomFasta("THREE", "Homo sapiens frequency", HOMO_SAPIENS, n * 5, writer);
 
-//  stderr.write("END  ${w.elapsedMilliseconds} ms\n");
+  if (DEBUG) {
+    writer.done.then((_) => stderr.write("CLOSED  ${w.elapsedMilliseconds} ms\n"));
+    writer.close();
+    stderr.write("END  ${w.elapsedMilliseconds} ms\n");
+  }
 }
 
