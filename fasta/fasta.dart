@@ -43,22 +43,22 @@ const bool DEBUG = false;
 Stopwatch w;
 
 class Frequency {
-  Uint16List chars;
-  List<double> probs;
+  Uint8List chars;
+  Float64List probs;
   int last;
-  
+
   double random(double max) {
     last = (last * IA + IC) % IM;
     return max * last * oneOverIM;
   }
 
-  Frequency(List<String> charList, List<double> probList) {
-    chars = new Uint16List(charList.length);
+  Frequency(List<String> charList, Float64List probList) {
+    chars = new Uint8List(charList.length);
     for (int i=0; i < chars.length; i++) {
       chars[i] = charList[i].codeUnitAt(0);
     }
 
-    probs = new List<double>(probList.length);
+    probs = new Float64List(probList.length);
     for (int i=0; i < probList.length; i++) {
       probs[i] = probList[i];
     }
@@ -74,7 +74,7 @@ class Frequency {
     }
   }
 
-  int selectRandomIntoBuffer(Uint16List buffer, int bufferIndex, int nRandom) {
+  int selectRandomIntoBuffer(Uint8List buffer, int bufferIndex, int nRandom) {
     final int len = probs.length;
 
     outer:
@@ -102,7 +102,7 @@ makeRepeatFasta(String id, String desc, String alu, int _nChars, IOSink writer) 
   final List<int> aluCode = alu.codeUnits;
   final int aluLength = aluCode.length;
 
-  Uint16List buffer = new Uint16List(BUFFER_SIZE);
+  Uint8List buffer = new Uint8List(BUFFER_SIZE);
 
   int bufferIndex = 0;
   int nChars = _nChars;
@@ -110,8 +110,8 @@ makeRepeatFasta(String id, String desc, String alu, int _nChars, IOSink writer) 
     final int chunkSize = nChars >= LINE_LENGTH ? LINE_LENGTH : nChars;
 
     if (bufferIndex == BUFFER_SIZE) {
-      writer.writeBytes(new Uint16List.view(buffer.buffer, 0, bufferIndex));
-      buffer = new Uint16List(BUFFER_SIZE);
+      writer.writeBytes(new Uint8List.view(buffer.buffer, 0, bufferIndex));
+      buffer = new Uint8List(BUFFER_SIZE);
       bufferIndex = 0;
     }
 
@@ -135,7 +135,7 @@ makeRepeatFasta(String id, String desc, String alu, int _nChars, IOSink writer) 
     nChars -= chunkSize;
   }
 
-  writer.writeBytes(new Uint16List.view(buffer.buffer, 0, bufferIndex));
+  writer.writeBytes(new Uint8List.view(buffer.buffer, 0, bufferIndex));
   if (DEBUG) stderr.write("Repeat END  ${w.elapsedMilliseconds} ms\n");
 }
 
@@ -145,15 +145,15 @@ void makeRandomFasta(String id, String desc, Frequency fpf, int nChars, IOSink w
   if (DEBUG) stderr.write("Random START  ${w.elapsedMilliseconds} ms\n");
   writer.write(">${id} ${desc}\n");
 
-  Uint16List buffer = new Uint16List(BUFFER_SIZE);
+  Uint8List buffer = new Uint8List(BUFFER_SIZE);
 
   int bufferIndex = 0;
   while (nChars > 0) {
     final int chunkSize = nChars >= LINE_LENGTH ? LINE_LENGTH : nChars;
 
     if (bufferIndex == BUFFER_SIZE) {
-      writer.writeBytes(new Uint16List.view(buffer.buffer, 0, bufferIndex));
-      buffer = new Uint16List(BUFFER_SIZE);
+      writer.writeBytes(new Uint8List.view(buffer.buffer, 0, bufferIndex));
+      buffer = new Uint8List(BUFFER_SIZE);
       bufferIndex = 0;
     }
 
@@ -164,7 +164,7 @@ void makeRandomFasta(String id, String desc, Frequency fpf, int nChars, IOSink w
   }
 
 
-  writer.writeBytes(new Uint16List.view(buffer.buffer, 0, bufferIndex));
+  writer.writeBytes(new Uint8List.view(buffer.buffer, 0, bufferIndex));
   if (DEBUG) stderr.write("Random END  ${w.elapsedMilliseconds} ms\n");
 }
 
@@ -175,10 +175,10 @@ main() {
     stderr.write("main start  ${w.elapsedMilliseconds} ms\n");
   }
 
-//  IOSink writer = stdout;
-  IOSink writer = new File(r'a.txt').openWrite();
+  IOSink writer = stdout;
+//  IOSink writer = new File(r'/dev/null').openWrite();
 
-  int n = 2500000;
+  int n = 250;
   List<String> args = new Options().arguments;
   if (args != null && args.length > 0) {
     n = int.parse(args[0]);
