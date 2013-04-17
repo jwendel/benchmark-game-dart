@@ -1,11 +1,17 @@
 import 'dart:io';
 import 'dart:typeddata';
 
-void main() {
-  String src   = "CGATMKRYVBHD";
-  String dst   = "GCTAKMYRBVDH";
-  Uint8List tbl   = new Uint8List(256);
 
+final String src   = "CGATMKRYVBHD";
+final String dst   = "GCTAKMYRBVDH";
+final Uint8List tbl   = new Uint8List(256);
+
+const int LINE_LENGTH = 60;
+final Uint8List buffer = new Uint8List(LINE_LENGTH);
+const int BUFFER_SIZE = 1024*1024;
+
+
+void main() {
   // Set up lookup table
   for (int i = 0; i < tbl.length; i++)
     tbl[i] = i;
@@ -15,8 +21,6 @@ void main() {
     tbl[src.toLowerCase().codeUnitAt(i)]  = dst.codeUnitAt(i);
   }
 
-  const int BUFFER_SIZE = 1024*1024;
-  Uint8List buffer = new Uint8List(60);
   List<int> list = new List<int>();
   bool commentLine = false;
   Uint8List sbuf = new Uint8List(BUFFER_SIZE);
@@ -30,7 +34,7 @@ void main() {
       while (pos < BUFFER_SIZE) {
         sbuf[pos++] = src[start++];
       }
-      stdout.writeBytes(sbuf);
+      stdout.add(sbuf);
       sbuf = new Uint8List(BUFFER_SIZE);
       pos = 0;
     }
@@ -42,7 +46,7 @@ void main() {
 
   void addNewline() {
     if (pos == BUFFER_SIZE) {
-      stdout.writeBytes(sbuf);
+      stdout.add(sbuf);
       sbuf = new Uint8List(BUFFER_SIZE);
       pos = 0;
     }
@@ -60,7 +64,7 @@ void main() {
 
         // Print the reverse components for the last block
         for (int g in list.reversed) {
-          if (count == 60) {
+          if (count == LINE_LENGTH) {
 
             copyAndPrint(buffer, count);
             addNewline();
@@ -100,7 +104,7 @@ void main() {
     } else {
       int count = 0;
       for (int data in list.reversed) {
-        if (count == 60) {
+        if (count == LINE_LENGTH) {
           copyAndPrint(buffer, count);
           addNewline();
           count=0;
@@ -113,6 +117,6 @@ void main() {
       }
     }
     if (pos > 0)
-      stdout.writeBytes(sbuf.sublist(0, pos));
+      stdout.add(sbuf.sublist(0, pos));
   });
 }
