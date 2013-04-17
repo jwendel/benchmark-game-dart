@@ -110,22 +110,22 @@ makeRepeatFasta(String id, String desc, String alu, int _nChars, IOSink writer) 
     final int chunkSize = nChars >= LINE_LENGTH ? LINE_LENGTH : nChars;
 
     if (bufferIndex == BUFFER_SIZE) {
-      writer.writeBytes(new Uint8List.view(buffer.buffer, 0, bufferIndex));
+      writer.add(new Uint8List.view(buffer.buffer, 0, bufferIndex));
       buffer = new Uint8List(BUFFER_SIZE);
       bufferIndex = 0;
     }
 
     if (aluIndex + chunkSize < aluLength) {
-      buffer.setRange(bufferIndex, chunkSize, aluCode, aluIndex);
+      buffer.setRange(bufferIndex, bufferIndex+chunkSize, aluCode, aluIndex);
       bufferIndex += chunkSize;
       aluIndex += chunkSize;
     } else {
       int len = aluLength - aluIndex;
-      buffer.setRange(bufferIndex, len, aluCode, aluIndex);
+      buffer.setRange(bufferIndex, bufferIndex+len, aluCode, aluIndex);
       bufferIndex += len;
       aluIndex = 0;
       len = chunkSize - len;
-      buffer.setRange(bufferIndex, len, aluCode, aluIndex);
+      buffer.setRange(bufferIndex, bufferIndex+len, aluCode, aluIndex);
       bufferIndex += len;
       aluIndex += len;
     }
@@ -135,7 +135,7 @@ makeRepeatFasta(String id, String desc, String alu, int _nChars, IOSink writer) 
     nChars -= chunkSize;
   }
 
-  writer.writeBytes(new Uint8List.view(buffer.buffer, 0, bufferIndex));
+  writer.add(new Uint8List.view(buffer.buffer, 0, bufferIndex));
   if (DEBUG) stderr.write("Repeat END  ${w.elapsedMilliseconds} ms\n");
 }
 
@@ -152,7 +152,7 @@ void makeRandomFasta(String id, String desc, Frequency fpf, int nChars, IOSink w
     final int chunkSize = nChars >= LINE_LENGTH ? LINE_LENGTH : nChars;
 
     if (bufferIndex == BUFFER_SIZE) {
-      writer.writeBytes(new Uint8List.view(buffer.buffer, 0, bufferIndex));
+      writer.add(new Uint8List.view(buffer.buffer, 0, bufferIndex));
       buffer = new Uint8List(BUFFER_SIZE);
       bufferIndex = 0;
     }
@@ -164,7 +164,7 @@ void makeRandomFasta(String id, String desc, Frequency fpf, int nChars, IOSink w
   }
 
 
-  writer.writeBytes(new Uint8List.view(buffer.buffer, 0, bufferIndex));
+  writer.add(new Uint8List.view(buffer.buffer, 0, bufferIndex));
   if (DEBUG) stderr.write("Random END  ${w.elapsedMilliseconds} ms\n");
 }
 
